@@ -42,6 +42,7 @@ contract NFTAucion is AccessControl {
     }
 
     event TransferReceivedNFT(address from, uint tokenId);
+    event Bid(address bidder, uint tokenId, uint256 bid);
 
     function mintNFT(string memory tokenURI) public returns (uint) {
         tokenId.increment();
@@ -58,5 +59,16 @@ contract NFTAucion is AccessControl {
         NFTs[_tokenId].endAt = block.timestamp + (numberOfDays * 1 days);
         myERC721.safeTransferFrom(msg.sender, address(this), _tokenId);
         emit TransferReceivedNFT(msg.sender, _tokenId);
+    }
+
+    function placeBid(uint _tokenId, uint256 bid) public {
+        require(NFTs[_tokenId].isListed, "NFT not listed");
+        require(NFTs[_tokenId].endAt >= block.timestamp, "auction ended");
+        require(NFTs[_tokenId].minBid < bid, "min bid is higher");
+        require(NFTs[_tokenId].highestBid < bid, "last bid is higher");
+
+        NFTs[_tokenId].highestBid = bid;
+        NFTs[_tokenId].highestBidder = msg.sender;
+        emit Bid(msg.sender, _tokenId, bid);
     }
 }
