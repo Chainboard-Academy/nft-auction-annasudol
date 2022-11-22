@@ -11,6 +11,8 @@ interface IMyErc20 {
 }
 interface IMyERC721 {
     function safeMint(address to, uint256 tokenId, string memory tokenURI) external;
+    function isOwner(uint256 tokenId) external view returns (bool);
+    function safeTransferFrom(address from, address to, uint256 tokenId) external;
 }
 
 contract NFTAucion is AccessControl {
@@ -39,11 +41,22 @@ contract NFTAucion is AccessControl {
         myERC721 = IMyERC721(_IMyERC721);
     }
 
+    event TransferReceivedNFT(address from, uint tokenId);
+
     function mintNFT(string memory tokenURI) public returns (uint) {
         tokenId.increment();
         uint newTokenId = tokenId.current();
         NFTs[newTokenId] = NFTAsset(newTokenId, tokenURI, 0, 0, false, address(0), msg.sender, 0, 0);
         myERC721.safeMint(msg.sender, newTokenId, tokenURI);
         return newTokenId;
+    }
+    function listNFTOnAuction(uint _tokenId, uint256 _minBid, uint256 numberOfDays) public {
+        require(myERC721.isOwner(_tokenId), 'you are not the NFT owner');
+        NFTs[_tokenId].minBid = _minBid;
+        NFTs[_tokenId].isListed = true;
+        NFTs[_tokenId].startAt = block.timestamp;
+        NFTs[_tokenId].endAt = block.timestamp + (numberOfDays * 1 days);
+        myERC721.safeTransferFrom(msg.sender, address(this), _tokenId);
+        emit TransferReceivedNFT(msg.sender, _tokenId);
     }
 }
