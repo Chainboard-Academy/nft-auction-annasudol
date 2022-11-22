@@ -111,6 +111,7 @@ contract NFTAucion is AccessControl {
          if(NFTs[_tokenId].highestBid > 0) {
             emit FinishAuction(NFTs[_tokenId].highestBidder, _tokenId, NFTs[_tokenId].highestBid);
             _endAuction(_tokenId);
+            _transferNFT(_tokenId);
          } else {
             //no bids, nft back to the owner
             emit ReturnNFT(_tokenId);
@@ -118,9 +119,9 @@ contract NFTAucion is AccessControl {
          }
     }
 
-    function transferNFT(uint256 _tokenId) public {
-        require(NFTs[_tokenId].isListed == false, "NFT is listed");
-        require(NFTs[_tokenId].highestBidder == msg.sender, "you are not winner");
+    function _transferNFT(uint256 _tokenId) internal {
+        // require(NFTs[_tokenId].isListed == false, "NFT is listed");
+        // require(NFTs[_tokenId].highestBidder == msg.sender, "you are not winner");
         //transfer NFT to winner
         myERC721.safeTransferFrom(address(this), msg.sender, _tokenId);
         emit ERC721Received(address(this), _tokenId);
