@@ -97,10 +97,12 @@ contract NFTAucion is AccessControl {
 
     function transferNFT(uint256 _tokenId) public {
         require(NFTs[_tokenId].isListed == false, "NFT is listed");
+        require(NFTs[_tokenId].highestBidder == msg.sender, "you are not winner");
+
         //transfer money to owner NFT
         myERC20.transfer(NFTs[_tokenId].owner, NFTs[_tokenId].highestBid);
         //transfer NFT to winner
-        myERC721.safeTransferFrom(address(this), NFTs[_tokenId].highestBidder, _tokenId);
+        myERC721.safeTransferFrom(address(this), msg.sender, _tokenId);
         NFTs[_tokenId].owner = NFTs[_tokenId].highestBidder;
         NFTs[_tokenId].highestBidder = address(0);
     }
