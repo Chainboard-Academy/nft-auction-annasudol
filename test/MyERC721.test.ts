@@ -20,8 +20,24 @@ describe('MyErc721', function () {
             const balance_account0 = await token.balanceOf(owner.address);
             let tx = token.safeMint(owner.address, 1, tokenURl);
             await expect(tx).to.emit(token, "Transfer").withArgs(zero_address, owner.address, 1);
-            // const new_balance_account0 = await token.balanceOf(owner.address);
-            // expect(new_balance_account0).to.equal(balance_account0.add(1));
+            const new_balance_account0 = await token.balanceOf(owner.address);
+            expect(new_balance_account0).to.equal(balance_account0.add(1));
+        });
+    });
+    describe('after safeMint', () => {
+        const tokenURl = 'tokenUrl';
+        const tokenId = 1;
+        before(async function () {
+            token.safeMint(owner.address, tokenId, tokenURl);
+        });
+        it('show isOwner to be true by given tokenId', async function () {
+            expect(await token.isOwner(tokenId)).to.be.true;
+        });
+        // it('show _tokenURIExists to be true by given tokenId', async function () {
+        //     expect(await token._tokenURIExists(tokenURl)).to.be.true;
+        // });
+        it('revert due to trying add nft with the same URL', async function () {
+            expect(token.safeMint(owner.address, 2, tokenURl)).to.be.rejectedWith('Token URI already exists')
         });
     });
 })

@@ -7,19 +7,13 @@ contract MyErc721 is ERC721URIStorage {
     constructor() ERC721("MyErc721", "ERC721") {}
 
     function safeMint(address to, uint256 tokenId, string memory tokenURI) public {
-        require(!_tokenURIExists(tokenURI), "Token URI already exists");
+        require(usedTokenURIs[tokenURI] == false, "Token URI already exists");
         _safeMint(to, tokenId);
-    }
-
-    function setTokenURI(uint256 tokenId, string memory tokenURI) public {
-        return _setTokenURI(tokenId, tokenURI);
+         usedTokenURIs[tokenURI] = true;
+        _setTokenURI(tokenId, tokenURI);
     }
 
     function isOwner(uint256 tokenId) external view returns (bool) {
         return _ownerOf(tokenId) == msg.sender;
-    }
-
-    function _tokenURIExists(string memory tokenURI) internal view returns (bool) {
-        return usedTokenURIs[tokenURI] == true;
     }
 }
