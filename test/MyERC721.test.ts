@@ -25,7 +25,7 @@ describe('MyErc721', function () {
         });
     });
     describe('after safeMint', () => {
-        const tokenURl = 'tokenUrl';
+        const tokenURl = 'tokenUrl_2';
         const tokenId = 0;
         before(async function () {
             token.safeMint(owner.address, tokenId, tokenURl);
