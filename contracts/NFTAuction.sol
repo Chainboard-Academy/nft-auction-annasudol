@@ -4,7 +4,6 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./MyERC20.sol";
 
 interface IMyErc20 {
     function mint(address to, uint256 amount) external;
@@ -19,7 +18,7 @@ interface IMyErc721 {
 contract NFTAuction is AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private tokenId;
-    MyErc20 public myERC20;
+    IMyErc20 public myERC20;
     IMyErc721 public myERC721;
     address public contractOwner;
 
@@ -37,7 +36,7 @@ contract NFTAuction is AccessControl {
 
     constructor(address _MyErc20, address _IMyErc721) {
         contractOwner = msg.sender;
-        myERC20 = MyErc20(_MyErc20);
+        myERC20 = IMyErc20(_MyErc20);
         myERC721 = IMyErc721(_IMyErc721);
     }
 
