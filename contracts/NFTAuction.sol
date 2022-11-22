@@ -12,11 +12,11 @@ interface IMyErc20 {
 }
 interface IMyErc721 {
     function safeMint(address to, uint256 tokenId, string memory tokenURI) external;
-    function isOwner(uint256 tokenId) external view returns (bool);
     function safeTransferFrom(address from, address to, uint256 tokenId) external;
+    function ownerOf(uint256 tokenId) external returns (address);
 }
 
-contract NFTAucion is AccessControl {
+contract NFTAuction is AccessControl {
     using Counters for Counters.Counter;
     Counters.Counter private tokenId;
     MyErc20 public myERC20;
@@ -30,11 +30,10 @@ contract NFTAucion is AccessControl {
         uint256 highestBid;
         bool isListed;
         address highestBidder;
-        address owner;
         uint256 startAt;
         uint256 endAt;
     }
-    mapping(uint=> NFTAsset) private NFTs;
+    mapping(uint=> NFTAsset) public NFTs;
 
     constructor(address _MyErc20, address _IMyErc721) {
         contractOwner = msg.sender;
@@ -47,15 +46,15 @@ contract NFTAucion is AccessControl {
     event FinishAuction(address winner, uint tokenId, uint256 bid);
     event ReturnNFT(uint tokenId);
     modifier onlyNFTOwner (uint _tokenId) {
-        require(myERC721.isOwner(_tokenId), 'you are not the NFT owner');
+        require(myERC721.ownerOf(_tokenId) == msg.sender, 'you are not the NFT owner');
         _;
     }
 
-    function mintNFT(string memory tokenURI) public returns (uint) {
+    function mintNFT(string memory _tokenURI) public returns (uint) {
         tokenId.increment();
         uint newTokenId = tokenId.current();
-        NFTs[newTokenId] = NFTAsset(newTokenId, tokenURI, 0, 0, false, address(0), msg.sender, 0, 0);
-        myERC721.safeMint(msg.sender, newTokenId, tokenURI);
+        NFTs[newTokenId] = NFTAsset(newTokenId, _tokenURI, 0, 0, false, address(0), 0, 0);
+        myERC721.safeMint(msg.sender, newTokenId, _tokenURI);
         return newTokenId;
     }
     /*
@@ -79,7 +78,7 @@ contract NFTAucion is AccessControl {
     Bid cannot be reverted, once tokens are deposited, they can be only returned when bidder loses.
     */
     function placeBid(uint _tokenId, uint256 bid) public {
-        require(NFTs[_tokenId].owner != msg.sender, "can't bid your auction");
+        require(myERC721.ownerOf(_tokenId) != msg.sender, "can't bid your auction");
         require(NFTs[_tokenId].isListed, "NFT not listed");
         require(NFTs[_tokenId].endAt >= block.timestamp, "auction ended");
         require(NFTs[_tokenId].minBid < bid, "min bid is higher");
@@ -91,7 +90,7 @@ contract NFTAucion is AccessControl {
             myERC20.transfer(NFTs[_tokenId].highestBidder, bid);
         } else {
              //transfer money to the NFT owner
-            myERC20.transfer(NFTs[_tokenId].owner, bid);
+            myERC20.transfer(myERC721.ownerOf(_tokenId), bid);
         }
 
         NFTs[_tokenId].highestBidder = msg.sender;
@@ -125,14 +124,13 @@ contract NFTAucion is AccessControl {
         //transfer NFT to winner
         myERC721.safeTransferFrom(address(this), msg.sender, _tokenId);
         emit ERC721Received(address(this), _tokenId);
-        NFTs[_tokenId].owner = msg.sender;
         NFTs[_tokenId].highestBidder = address(0);
     }
 
     function _withdrawNft(uint256 _tokenId) internal {
         _endAuction(_tokenId);
          //nft transfer to the minter
-        myERC721.safeTransferFrom(address(this), NFTs[_tokenId].owner, _tokenId);
+        myERC721.safeTransferFrom(address(this), myERC721.ownerOf(_tokenId), _tokenId);
         emit ERC721Received(address(this), _tokenId);
     }
 

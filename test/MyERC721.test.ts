@@ -30,12 +30,9 @@ describe('MyErc721', function () {
         before(async function () {
             token.safeMint(owner.address, tokenId, tokenURl);
         });
-        it('show isOwner to be true by given tokenId', async function () {
-            expect(await token.isOwner(tokenId)).to.be.true;
+        it('show owner to be true by given tokenId', async function () {
+            expect(await token.ownerOf(tokenId)).to.be.equal(owner.address);
         });
-        // it('show _tokenURIExists to be true by given tokenId', async function () {
-        //     expect(await token._tokenURIExists(tokenURl)).to.be.true;
-        // });
         it('revert due to trying add nft with the same URL', async function () {
             expect(token.safeMint(owner.address, 2, tokenURl)).to.be.rejectedWith('Token URI already exists')
         });

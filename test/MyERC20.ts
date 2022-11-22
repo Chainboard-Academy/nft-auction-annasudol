@@ -8,7 +8,6 @@ describe('MyErc20', function () {
   let account1: SignerWithAddress;
   let token: any;
 
-
   before(async function () {
     const ERC20 = await ethers.getContractFactory("MyErc20");
     [owner, account1] = await ethers.getSigners();
@@ -26,10 +25,10 @@ describe('MyErc20', function () {
       expect(new_total_supply).to.equal(total_supply.add(100));
     });
     it('revert transaction, due to zero address', async function () {
-      await expect(token.mint(zero_address, 100)).to.be.revertedWith("ERC20: mint to the zero address");
+      await expect(token.mint(zero_address, 100)).to.be.rejectedWith("ERC20: mint to the zero address");
     });
     it('revert transaction, due to done not by the owner', async function () {
-      await expect(token.connect(account1).mint(account1.address, 100)).to.be.reverted;
+      await expect(token.connect(account1).mint(account1.address, 100)).to.be.rejected;
     });
   });
 })

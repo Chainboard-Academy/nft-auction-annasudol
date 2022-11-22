@@ -13,7 +13,7 @@ contract MyErc721 is ERC721URIStorage {
         _setTokenURI(tokenId, tokenURI);
     }
 
-    function isOwner(uint256 tokenId) external view returns (bool) {
-        return _ownerOf(tokenId) == msg.sender;
+    function ownerOf(uint256 tokenId) public override view  returns (address) {
+        return _ownerOf(tokenId);
     }
 }
