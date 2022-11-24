@@ -29,6 +29,7 @@ contract NFTAuction is AccessControl {
         address highestBidder;
         uint256 startAt;
         uint256 endAt;
+        address owner;
     }
     mapping(uint256=> NFTAsset) public NFTs;
 
@@ -64,6 +65,14 @@ contract NFTAuction is AccessControl {
         return IERC721Receiver.onERC721Received.selector;
     }
 
+
+
+    function mintNFT(uint256 _tokenId) public {
+        NFTs[_tokenId] = NFTAsset(_tokenId, 0, 0, true, address(0), block.timestamp, _endAt, msg.sender);
+        myERC721.safeMint(msg.sender, _tokenId);
+    }
+    /*
+
     /*
     list on auction NFT that msg.sender has deposited with safeTransferFrom. 
     Users willing to list their NFT are free to choose any ERC20 token for bids. 
@@ -73,7 +82,7 @@ contract NFTAuction is AccessControl {
     */
     function listNFTOnAuction(uint256 _tokenId, uint256 _minBid, uint256 numberOfDays) onlyNFTOwner(_tokenId) public {
         uint256 _endAt = block.timestamp + (numberOfDays * 1 days);
-        NFTs[_tokenId] = NFTAsset(_tokenId, _minBid, 0, true, address(0), block.timestamp, _endAt );
+        // NFTs[_tokenId] = NFTAsset(_tokenId, _minBid, 0, true, address(0), block.timestamp, _endAt, );
         myERC721.safeTransferFrom(msg.sender, address(this), _tokenId);
         emit ERC721Received(msg.sender, _tokenId);
     }
@@ -83,13 +92,12 @@ contract NFTAuction is AccessControl {
     Bid cannot be reverted, once tokens are deposited, they can be only returned when bidder loses.
     */
     function placeBid(uint256 _tokenId, uint256 bid) public {
-        require(myERC721.ownerOf(_tokenId) != msg.sender, "can't bid your auction");
         require(NFTs[_tokenId].isListed, "NFT not listed");
         require(NFTs[_tokenId].endAt >= block.timestamp, "auction ended");
         require(NFTs[_tokenId].minBid < bid, "min bid is higher");
         require(NFTs[_tokenId].highestBid < bid, "last bid is higher");
 
-        //If there were previous bids
+        // //If there were previous bids
         if(NFTs[_tokenId].highestBidder != address(0)){
             //transfer money to the previous bidder
             myERC20.transfer(NFTs[_tokenId].highestBidder, bid);
