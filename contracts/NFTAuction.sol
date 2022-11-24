@@ -10,7 +10,7 @@ interface IMyErc20 {
     function transfer(address to, uint256 amount) external returns (bool);
 }
 interface IMyErc721 {
-    function safeMint(address to, uint256 tokenId) external;
+    function mintNFT(uint256 tokenId) external;
     function safeTransferFrom(address from, address to, uint256 tokenId) external;
     function ownerOf(uint256 tokenId) external returns (address);
 }
@@ -38,13 +38,13 @@ contract NFTAuction is AccessControl {
         myERC20 = IMyErc20(_MyErc20);
         myERC721 = IMyErc721(_IMyErc721);
     }
-
+    event MintNFT(address to, uint256 tokenId);
     event ERC721Received(address from, uint tokenId);
     event Bid(address bidder, uint256 tokenId, uint256 bid);
     event FinishAuction(address winner, uint256 tokenId, uint256 bid);
     event ReturnNFT(uint256 tokenId);
     modifier onlyNFTOwner (uint256 _tokenId) {
-        require(myERC721.ownerOf(_tokenId) == msg.sender, 'you are not the NFT owner');
+        require(NFTs[_tokenId].owner == msg.sender, 'you are not the NFT owner');
         _;
     }
 
@@ -66,7 +66,8 @@ contract NFTAuction is AccessControl {
 
     function mintNFT(uint256 _tokenId) public {
         NFTs[_tokenId] = NFTAsset(_tokenId, 0, 0, false, address(0), 0, 0, msg.sender);
-        myERC721.safeMint(msg.sender, _tokenId);
+        myERC721.mintNFT(_tokenId);
+        emit MintNFT(msg.sender, _tokenId);
     }
     /*
 
@@ -85,9 +86,9 @@ contract NFTAuction is AccessControl {
         NFTs[_tokenId].isListed = true;
         NFTs[_tokenId].startAt = block.timestamp;
         NFTs[_tokenId].endAt = _endAt;
-
-        myERC721.safeTransferFrom(msg.sender, address(this), _tokenId);
-        emit ERC721Received(msg.sender, _tokenId);
+        address nftOwner = myERC721.ownerOf(_tokenId);
+        myERC721.safeTransferFrom(nftOwner, address(this), _tokenId);
+        emit ERC721Received(nftOwner, _tokenId);
     }
     /*
     placeBid - should take from user ERC20 tokens specified in listOnAuction function for specific NFT (address+tokenId). 
