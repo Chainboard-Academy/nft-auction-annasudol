@@ -10,7 +10,7 @@ interface IMyErc20 {
     function transfer(address to, uint256 amount) external returns (bool);
 }
 interface IMyErc721 {
-    function safeMint(address to, uint256 tokenId, string memory tokenURI) external;
+    function safeMint(address to, uint256 tokenId) external;
     function safeTransferFrom(address from, address to, uint256 tokenId) external;
     function ownerOf(uint256 tokenId) external returns (address);
 }
@@ -48,7 +48,6 @@ contract NFTAuction is AccessControl {
         _;
     }
 
-
     /**
      * ERC721TokenReceiver interface function. Hook that will be triggered on safeTransferFrom as per EIP-721.
      * It should execute a deposit for `_from` address.
@@ -65,10 +64,8 @@ contract NFTAuction is AccessControl {
         return IERC721Receiver.onERC721Received.selector;
     }
 
-
-
     function mintNFT(uint256 _tokenId) public {
-        NFTs[_tokenId] = NFTAsset(_tokenId, 0, 0, true, address(0), block.timestamp, _endAt, msg.sender);
+        NFTs[_tokenId] = NFTAsset(_tokenId, 0, 0, false, address(0), 0, 0, msg.sender);
         myERC721.safeMint(msg.sender, _tokenId);
     }
     /*
@@ -82,7 +79,13 @@ contract NFTAuction is AccessControl {
     */
     function listNFTOnAuction(uint256 _tokenId, uint256 _minBid, uint256 numberOfDays) onlyNFTOwner(_tokenId) public {
         uint256 _endAt = block.timestamp + (numberOfDays * 1 days);
-        // NFTs[_tokenId] = NFTAsset(_tokenId, _minBid, 0, true, address(0), block.timestamp, _endAt, );
+        NFTs[_tokenId].minBid = _minBid;
+        NFTs[_tokenId].endAt = _endAt;
+        NFTs[_tokenId].endAt = _endAt;
+        NFTs[_tokenId].isListed = true;
+        NFTs[_tokenId].startAt = block.timestamp;
+        NFTs[_tokenId].endAt = _endAt;
+
         myERC721.safeTransferFrom(msg.sender, address(this), _tokenId);
         emit ERC721Received(msg.sender, _tokenId);
     }
@@ -97,7 +100,7 @@ contract NFTAuction is AccessControl {
         require(NFTs[_tokenId].minBid < bid, "min bid is higher");
         require(NFTs[_tokenId].highestBid < bid, "last bid is higher");
 
-        // //If there were previous bids
+        //If there were previous bids
         if(NFTs[_tokenId].highestBidder != address(0)){
             //transfer money to the previous bidder
             myERC20.transfer(NFTs[_tokenId].highestBidder, bid);
