@@ -59,13 +59,22 @@ describe("NFTAuction", function () {
 
         before(async function () {
             await auction.mintNFT(nftId_3);
-            await erc20.mint(acc0.address, bid_1);
+            await erc20.mint(auction.address, 10);
 
         });
         it('reverts transaction', async () => {
             await expect(auction.placeBid(nftId_3, 5)).to.be.rejectedWith("NFT not listed")
             await auction.listNFTOnAuction(nftId_3, 1, 1);
             await expect(auction.placeBid(nftId_3, 1)).to.be.rejectedWith("min bid is higher")
+        });
+        it('changes state after accepting transaction', async () => {
+            const value = ethers.utils.parseEther("5");
+            const tx = await auction.placeBid(nftId_3, bid_2);
+
+            // await expect(tx).to.emit(auction, "Bid").withArgs(acc0.address, nftId_2, 5);
+            const { highestBidder, highestBid } = await auction.NFTs(nftId_3);
+            expect(highestBidder).to.equal(acc0.address)
+            expect(highestBid).to.be.equal(bid_2)
         })
     });
 

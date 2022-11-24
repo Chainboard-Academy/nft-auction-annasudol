@@ -107,9 +107,9 @@ contract NFTAuction is AccessControl {
             myERC20.transfer(NFTs[_tokenId].highestBidder, bid);
         } else {
              //transfer money to the NFT owner
-            myERC20.transfer(myERC721.ownerOf(_tokenId), bid);
+            myERC20.transfer(NFTs[_tokenId].owner, bid);
         }
-
+        // myERC20.transfer(myERC721.ownerOf(_tokenId), bid);
         NFTs[_tokenId].highestBidder = msg.sender;
         NFTs[_tokenId].highestBid = bid;
         emit Bid(msg.sender, _tokenId, bid);
