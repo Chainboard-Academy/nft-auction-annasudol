@@ -31,5 +31,5 @@ describe('MyErc20', function () {
       await expect(token.connect(account1).mint(account1.address, 100)).to.be.rejected;
     });
   });
-})
+});
 

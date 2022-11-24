@@ -25,5 +25,5 @@ describe('MyErc721', function () {
             expect(token_owner).to.equal(acc0.address);
         });
     });
-})
+});
 

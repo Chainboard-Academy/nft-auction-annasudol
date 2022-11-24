@@ -55,7 +55,7 @@ describe("NFTAuction", function () {
     describe('place Bid', () => {
         const min_bid = 2;
         const bid_1 = 3;
-        const bid_2 = 5;
+        const bid = 5;
 
         before(async function () {
             await auction.mintNFT(nftId_3);
