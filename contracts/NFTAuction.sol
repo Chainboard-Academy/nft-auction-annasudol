@@ -16,15 +16,13 @@ interface IMyErc721 {
 }
 
 contract NFTAuction is AccessControl {
-    using Counters for Counters.Counter;
-    Counters.Counter private tokenId;
+
     IMyErc20 public myERC20;
     IMyErc721 public myERC721;
     address public contractOwner;
 
     struct NFTAsset {
-        uint tokenId;
-        string tokenURI;
+        uint256 toknenID;
         uint256 minBid;
         uint256 highestBid;
         bool isListed;
@@ -32,7 +30,7 @@ contract NFTAuction is AccessControl {
         uint256 startAt;
         uint256 endAt;
     }
-    mapping(uint=> NFTAsset) public NFTs;
+    mapping(uint256=> NFTAsset) public NFTs;
 
     constructor(address _MyErc20, address _IMyErc721) {
         contractOwner = msg.sender;
@@ -41,21 +39,14 @@ contract NFTAuction is AccessControl {
     }
 
     event ERC721Received(address from, uint tokenId);
-    event Bid(address bidder, uint tokenId, uint256 bid);
-    event FinishAuction(address winner, uint tokenId, uint256 bid);
-    event ReturnNFT(uint tokenId);
-    modifier onlyNFTOwner (uint _tokenId) {
+    event Bid(address bidder, uint256 tokenId, uint256 bid);
+    event FinishAuction(address winner, uint256 tokenId, uint256 bid);
+    event ReturnNFT(uint256 tokenId);
+    modifier onlyNFTOwner (uint256 _tokenId) {
         require(myERC721.ownerOf(_tokenId) == msg.sender, 'you are not the NFT owner');
         _;
     }
 
-    function mintNFT(string memory _tokenURI) public returns (uint) {
-        tokenId.increment();
-        uint newTokenId = tokenId.current();
-        NFTs[newTokenId] = NFTAsset(newTokenId, _tokenURI, 0, 0, false, address(0), 0, 0);
-        myERC721.safeMint(msg.sender, newTokenId, _tokenURI);
-        return newTokenId;
-    }
     /*
     list on auction NFT that msg.sender has deposited with safeTransferFrom. 
     Users willing to list their NFT are free to choose any ERC20 token for bids. 
@@ -63,11 +54,9 @@ contract NFTAuction is AccessControl {
     During the auction there should be no way for NFT to leave the contract - it should be locked on contract. 
     One NFT can participate in only one auction.
     */
-    function listNFTOnAuction(uint _tokenId, uint256 _minBid, uint256 numberOfDays) onlyNFTOwner(_tokenId) public {
-        NFTs[_tokenId].minBid = _minBid;
-        NFTs[_tokenId].isListed = true;
-        NFTs[_tokenId].startAt = block.timestamp;
-        NFTs[_tokenId].endAt = block.timestamp + (numberOfDays * 1 days);
+    function listNFTOnAuction(uint256 _tokenId, uint256 _minBid, uint256 numberOfDays) onlyNFTOwner(_tokenId) public {
+        uint256 _endAt = block.timestamp + (numberOfDays * 1 days);
+        NFTs[_tokenId] = NFTAsset(_tokenId, _minBid, 0, true, address(0), block.timestamp, _endAt );
         myERC721.safeTransferFrom(msg.sender, address(this), _tokenId);
         emit ERC721Received(msg.sender, _tokenId);
     }
@@ -76,7 +65,7 @@ contract NFTAuction is AccessControl {
     Function should revert if bid is placed out of auction effective time range specified in listNFTOnAuction. 
     Bid cannot be reverted, once tokens are deposited, they can be only returned when bidder loses.
     */
-    function placeBid(uint _tokenId, uint256 bid) public {
+    function placeBid(uint256 _tokenId, uint256 bid) public {
         require(myERC721.ownerOf(_tokenId) != msg.sender, "can't bid your auction");
         require(NFTs[_tokenId].isListed, "NFT not listed");
         require(NFTs[_tokenId].endAt >= block.timestamp, "auction ended");
