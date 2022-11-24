@@ -26,23 +26,28 @@ describe("NFTAuction", function () {
 
 
     const nftId = 1;
+    const mintBid = 1;
     before(async function () {
         await erc721.mintNFT(nftId);
-        await auction.listNFTOnAuction(nftId, 1, 1);
+
     });
 
 
-    it("display nft's value properly", async function () {
-        // const { isListed, minBid, startAt, endAt, ONE_DAY_IN_SECS } = await auction;
-        const isListed = await auction.isListed;
-        const timestamp = (await auction.getBlock(0)).timestamp;
-        expect(isListed).equal(true);
-        // expect(minBid).equal(mintBidEth);
-        // expect(startAt).equal(timestamp);
-        // expect(endAt).equal((timestamp + ONE_DAY_IN_SECS));
-    });
-    it("display nft's owner properly", async function () {
+    it("listNFTOnAuction", async function () {
         const nftOwner = await erc721.ownerOf(nftId);
-        expect(nftOwner).to.equal(zeroValue);
+        console.log(nftOwner)
+        await erc721.approve(auction.address, mintBid);
+        // const { isListed, minBid, startAt, endAt, ONE_DAY_IN_SECS } = await auction;
+        const tx = await auction.listNFTOnAuction(nftId, nftId, 1);
+        await expect(tx).to.emit(auction, "ERC721Received").withArgs(acc0.address, nftId);
+        // // expect(minBid).equal(mintBidEth);
+        // // expect(startAt).equal(timestamp);
+        // // expect(endAt).equal((timestamp + ONE_DAY_IN_SECS));
+        // const nftOwner = await erc721.ownerOf(nftId);
+        // expect(nftOwner).to.equal(zeroValue);
     });
+    // it("display nft's owner properly", async function () {
+    //     const nftOwner = await erc721.ownerOf(nftId);
+    //     expect(nftOwner).to.equal(zeroValue);
+    // });
 });

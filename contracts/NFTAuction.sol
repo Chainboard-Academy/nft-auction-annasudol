@@ -47,6 +47,23 @@ contract NFTAuction is AccessControl {
         _;
     }
 
+
+    /**
+     * ERC721TokenReceiver interface function. Hook that will be triggered on safeTransferFrom as per EIP-721.
+     * It should execute a deposit for `_from` address.
+     * After deposit this token can be either returned back to the owner, or placed on auction.
+     * It should emit an event that will let the user know that the deposit is successful.
+     * It is mandatory to call ERC721 contract back to check if a token is received by auction (require ownerOf(nftId) to be equal address(this))
+     */
+    function onERC721Received(
+        address,
+        address,
+        uint256,
+        bytes calldata
+    ) external pure returns (bytes4) {
+        return IERC721Receiver.onERC721Received.selector;
+    }
+
     /*
     list on auction NFT that msg.sender has deposited with safeTransferFrom. 
     Users willing to list their NFT are free to choose any ERC20 token for bids. 
