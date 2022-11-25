@@ -5,8 +5,6 @@ import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("NFTAuction", function () {
     const ONE_DAY_IN_SECS = 24 * 60 * 60;
-    const zeroValue = ethers.constants.Zero;
-    const zeroAddress = ethers.constants.AddressZero;
 
     let erc20: any;
     let erc721: any;
@@ -50,10 +48,9 @@ describe("NFTAuction", function () {
             expect(nftOwner).to.equal(acc0.address)
             await erc721.approve(auction.address, nftId_2)
             const tx = await auction.listNFTOnAuction(nftId_2, min_bid, 1);
+            await expect(tx).to.emit(auction, "ERC721Received").withArgs(acc0.address, nftId_2);
             nftOwner = await erc721.ownerOf(nftId_2);
             expect(nftOwner).to.equal(auction.address)
-
-            // await expect(tx).to.emit(auction, "ERC721Received").withArgs(auction.address, nftId_2);
         });
         it('reverts transaction', async () => {
             await erc721.connect(acc1).approve(auction.address, nftId_3)
@@ -80,7 +77,7 @@ describe("NFTAuction", function () {
             tx_allowance.wait();
             const tx = await auction.placeBid(nftId_4, bid_1);
 
-            // // // await expect(tx).to.emit(auction, "Bid").withArgs(acc0.address, nftId_2, 5);
+            expect(tx).to.emit(auction, "Bid").withArgs(acc0.address, nftId_2, bid_1);
             const { highestBidder, highestBid } = await auction.NFTs(nftId_4);
             expect(highestBidder).to.equal(acc0.address);
             expect(highestBid).to.be.equal(bid_1);
