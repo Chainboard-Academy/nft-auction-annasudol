@@ -5,7 +5,6 @@ import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 
 describe("NFTAuction", function () {
     const ONE_DAY_IN_SECS = 24 * 60 * 60;
-    const TEN_DAYS_IN_SECS = 10 * 24 * 60 * 60;
     const zeroValue = ethers.constants.Zero;
     const zeroAddress = ethers.constants.AddressZero;
 
@@ -63,7 +62,8 @@ describe("NFTAuction", function () {
     });
 
     describe('place Bid', () => {
-        const bid = 5;
+        const bid_1 = 5;
+        const bid_2 = 7;
         const nftId_4 = 4;
         before(async function () {
             await auction.mintNFT(nftId_4);
@@ -75,80 +75,52 @@ describe("NFTAuction", function () {
             await expect(auction.placeBid(nftId_4, 1)).to.be.rejectedWith("min bid is higher")
         });
         it('changes state after accepting transaction', async () => {
-            await erc20.mint(auction.address, bid);
-            const tx_allowance = await erc20.increaseAllowance(auction.address, bid);
+            await erc20.mint(auction.address, 12);
+            let tx_allowance = await erc20.increaseAllowance(auction.address, bid_1);
             tx_allowance.wait();
-            const tx = await auction.placeBid(nftId_4, bid);
+            const tx = await auction.placeBid(nftId_4, bid_1);
 
             // // // await expect(tx).to.emit(auction, "Bid").withArgs(acc0.address, nftId_2, 5);
             const { highestBidder, highestBid } = await auction.NFTs(nftId_4);
             expect(highestBidder).to.equal(acc0.address);
-            expect(highestBid).to.be.equal(bid);
+            expect(highestBid).to.be.equal(bid_1);
+            tx_allowance = await erc20.connect(acc1).increaseAllowance(auction.address, bid_2);
+            tx_allowance.wait();
+            await expect(auction.connect(acc1).placeBid(nftId_4, 4)).to.be.rejectedWith("last bid is higher")
+
+            await auction.connect(acc1).placeBid(nftId_4, bid_2);
         })
     });
 
+    describe('finish auction', () => {
+        const nftId_5 = 5;
+        before(async function () {
+            await auction.mintNFT(nftId_5);
+            await erc721.approve(auction.address, nftId_5);
+            await auction.listNFTOnAuction(nftId_5, 1, 1);
+        });
 
-    // describe('finish auction', () => {
-
-    //     before(async function () {
-    //         // await time.increaseTo(endAt);
-
-    //     });
-    //     it('reverts transaction', async () => {
-    //         await expect(auction.finishAuction(nftId_3)).to.be.rejectedWith("auction not ended")
-    //         // await auction.listNFTOnAuction(nftId_3, 1, 1);
-    //         // await expect(auction.placeBid(nftId_3, 1)).to.be.rejectedWith("min bid is higher")
-    //     });
-    //     it('reverts transaction', async () => {
-    //         await expect(auction.finishAuction(nftId_3)).to.be.rejectedWith("auction not ended")
-    //         // await auction.listNFTOnAuction(nftId_3, 1, 1);
-    //         // await expect(auction.placeBid(nftId_3, 1)).to.be.rejectedWith("min bid is higher")
-    //     });
-
-    // });
-
-    // const nftId = 1;
-    // const mintBid = 1;
-
-    // it("emits ERC721Received after listNFTOnAuction and changes owner", async function () {
-    // let nftOwner = await erc721.ownerOf(nftId);
-    // expect(nftOwner).to.equal(acc0.address)
-    // const tx = await auction.listNFTOnAuction(nftId, nftId, 1);
-    // await expect(tx).to.emit(auction, "ERC721Received").withArgs(acc0.address, nftId);
-    // nftOwner = await erc721.ownerOf(nftId);
-    // expect(nftOwner).to.equal(auction.address);
-    // });
-
-    // describe('placeBid', () => {
-    //     const nftId_2 = 2;
-    //     const bid = 3;
-    //     before(async function () {
-    //         await erc721.mintNFT(nftId_2);
-    //         await erc721.approve(auction.address, nftId_2);
-    //         await erc20.mint(acc0.address, bid);
-    //         await erc20.mint(acc1.address, bid);
-    //         await erc20.increaseAllowance(auction.address, bid);
-    //     });
-    //     it('reverts transaction', async () => {
-
-    //         await expect(auction.placeBid(nftId, 1)).to.be.rejectedWith("min bid is higher")
-
-    //         // require(!NFTs[_tokenId].isListed, "NFT not listed");
-    //         // require(NFTs[_tokenId].endAt >= block.timestamp, "auction ended");
-    //         // require(NFTs[_tokenId].minBid < bid, "min bid is higher");
-    //         // require(NFTs[_tokenId].highestBid < bid, "last bid is higher");
-
-    //     })
-    //     it('bid transaction', async () => {
-
-    //         const tx = await auction.placeBid(nftId, 2);
-
-    //         // require(!NFTs[_tokenId].isListed, "NFT not listed");
-    //         // require(NFTs[_tokenId].endAt >= block.timestamp, "auction ended");
-    //         // require(NFTs[_tokenId].minBid < bid, "min bid is higher");
-    //         // require(NFTs[_tokenId].highestBid < bid, "last bid is higher");
-
-    //     })
-    // });
-
+        it('reverts transaction', async () => {
+            await expect(auction.finishAuction(nftId_5)).to.be.rejectedWith("auction not ended")
+        });
+        it('finish transaction without bids', async () => {
+            const endAt = (await time.latest()) + ONE_DAY_IN_SECS;
+            await time.increaseTo(endAt);
+            const tx = await auction.finishAuction(nftId_5);
+            expect(tx).to.emit(auction, "ReturnNFT").withArgs(nftId_5);
+        });
+        it('finish transaction with bids', async () => {
+            const tx_allowance = await erc20.increaseAllowance(auction.address, 5);
+            tx_allowance.wait();
+            await erc721.approve(auction.address, nftId_5);
+            await erc20.mint(auction.address, 5);
+            await auction.listNFTOnAuction(nftId_5, 1, 1);
+            await auction.connect(acc1).placeBid(nftId_5, 5);
+            const endAt = (await time.latest()) + ONE_DAY_IN_SECS;
+            await time.increaseTo(endAt);
+            await expect(auction.placeBid(nftId_5, 5)).to.be.rejectedWith("auction ended")
+            const tx = await auction.finishAuction(nftId_5);
+            expect(tx).to.emit(auction, "FinishAuction").withArgs(acc1.address, nftId_5, 5);
+        });
+    });
 });
