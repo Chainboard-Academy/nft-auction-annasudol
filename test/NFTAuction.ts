@@ -108,6 +108,8 @@ describe("NFTAuction", function () {
             await time.increaseTo(endAt);
             const tx = await auction.finishAuction(nftId_5);
             expect(tx).to.emit(auction, "ReturnNFT").withArgs(nftId_5);
+            const { isListed } = await auction.NFTs(nftId_5);
+            expect(isListed).to.be.false;
         });
         it('finish transaction with bids', async () => {
             const tx_allowance = await erc20.increaseAllowance(auction.address, 5);
@@ -121,6 +123,11 @@ describe("NFTAuction", function () {
             await expect(auction.placeBid(nftId_5, 5)).to.be.rejectedWith("auction ended")
             const tx = await auction.finishAuction(nftId_5);
             expect(tx).to.emit(auction, "FinishAuction").withArgs(acc1.address, nftId_5, 5);
+            expect(tx).to.emit(auction, "ERC721Received").withArgs(auction.address, nftId_5);
+            const { isListed } = await auction.NFTs(nftId_5);
+            expect(isListed).to.be.false;
+            const ownerNFT = await erc721.ownerOf(nftId_5);
+            expect(ownerNFT).to.be.equal(acc1.address)
         });
     });
 });
