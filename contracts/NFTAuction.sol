@@ -109,7 +109,6 @@ contract NFTAuction is AccessControl {
              //transfer money to the NFT owner
             myERC20.transfer(NFTs[_tokenId].owner, bid);
         }
-        // myERC20.transfer(myERC721.ownerOf(_tokenId), bid);
         NFTs[_tokenId].highestBidder = msg.sender;
         NFTs[_tokenId].highestBid = bid;
         emit Bid(msg.sender, _tokenId, bid);
@@ -136,10 +135,8 @@ contract NFTAuction is AccessControl {
     }
 
     function _transferNFT(uint256 _tokenId) internal {
-        // require(NFTs[_tokenId].isListed == false, "NFT is listed");
-        // require(NFTs[_tokenId].highestBidder == msg.sender, "you are not winner");
         //transfer NFT to winner
-        myERC721.safeTransferFrom(address(this), msg.sender, _tokenId);
+        myERC721.safeTransferFrom(address(this), NFTs[_tokenId].highestBidder, _tokenId);
         emit ERC721Received(address(this), _tokenId);
         NFTs[_tokenId].highestBidder = address(0);
     }
@@ -147,7 +144,7 @@ contract NFTAuction is AccessControl {
     function _withdrawNft(uint256 _tokenId) internal {
         _endAuction(_tokenId);
          //nft transfer to the minter
-        myERC721.safeTransferFrom(address(this), myERC721.ownerOf(_tokenId), _tokenId);
+        myERC721.safeTransferFrom(address(this), NFTs[_tokenId].owner, _tokenId);
         emit ERC721Received(address(this), _tokenId);
     }
 

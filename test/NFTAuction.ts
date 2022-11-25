@@ -22,7 +22,6 @@ describe("NFTAuction", function () {
         [acc0, acc1] = await ethers.getSigners();
         const MyErc20 = await ethers.getContractFactory("MyErc20");
         erc20 = await MyErc20.deploy();
-        // await erc20.mint(acc0, 100)
         const MyErc721 = await ethers.getContractFactory("MyErc721");
         erc721 = await MyErc721.deploy();
 
@@ -57,10 +56,10 @@ describe("NFTAuction", function () {
 
             // await expect(tx).to.emit(auction, "ERC721Received").withArgs(auction.address, nftId_2);
         });
-        // it('reverts transaction', async () => {
-        //     await erc721.approve(auction.address, nftId_3)
-        //     await expect(auction.connect(acc1).listNFTOnAuction(nftId_3, min_bid, 1)).to.be.rejectedWith("you are not the NFT owner")
-        // })
+        it('reverts transaction', async () => {
+            await erc721.connect(acc1).approve(auction.address, nftId_3)
+            await expect(auction.listNFTOnAuction(nftId_3, min_bid, 1)).to.be.rejectedWith("you are not the NFT owner")
+        })
     });
 
     describe('place Bid', () => {
