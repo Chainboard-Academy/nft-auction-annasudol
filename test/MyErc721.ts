@@ -17,7 +17,7 @@ describe('MyErc721', function () {
         const tokenId = 1;
         it('to the address successfully', async function () {
             const balance_account0 = await token.balanceOf(acc0.address);
-            let tx = token.mintNFT(tokenId);
+            let tx = token.mintNFT(acc0.address, tokenId);
             await expect(tx).to.emit(token, "Transfer").withArgs(zero_address, acc0.address, tokenId);
             const new_balance_account0 = await token.balanceOf(acc0.address);
             expect(new_balance_account0).to.equal(balance_account0.add(1));

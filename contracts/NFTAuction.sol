@@ -10,7 +10,7 @@ interface IMyErc20 {
     function transfer(address to, uint256 amount) external returns (bool);
 }
 interface IMyErc721 {
-    function mintNFT(uint256 tokenId) external;
+    function mintNFT(address to, uint256 tokenId) external;
     function safeTransferFrom(address from, address to, uint256 tokenId) external;
     function ownerOf(uint256 tokenId) external returns (address);
 }
@@ -66,7 +66,7 @@ contract NFTAuction is AccessControl {
 
     function mintNFT(uint256 _tokenId) public {
         NFTs[_tokenId] = NFTAsset(_tokenId, 0, 0, false, address(0), 0, 0, msg.sender);
-        myERC721.mintNFT(_tokenId);
+        myERC721.mintNFT(msg.sender, _tokenId);
         emit MintNFT(msg.sender, _tokenId);
     }
     /*
