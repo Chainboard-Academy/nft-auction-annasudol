@@ -8,6 +8,9 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 interface IMyErc20 {
     function mint(address to, uint256 amount) external;
     function transfer(address to, uint256 amount) external returns (bool);
+    function balanceOf(address account) external returns (uint256);
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+
 }
 interface IMyErc721 {
     function safeTransferFrom(address from, address to, uint256 tokenId) external;
@@ -40,7 +43,11 @@ contract NFTAuction is IERC721Receiver {
     event FinishAuction(address winner, uint256 tokenId, uint256 bid);
     event ReturnNFT(uint256 tokenId);
 
-
+    modifier checkBalance(uint256 bid) {
+        uint256 balance = myERC20.balanceOf(msg.sender);
+        require(balance >= bid, 'not enough ERC20 funds');
+        _;
+    }
     /**
      * ERC721TokenReceiver interface function. Hook that will be triggered on safeTransferFrom as per EIP-721.
      * It should execute a deposit for `_from` address.
@@ -67,12 +74,14 @@ contract NFTAuction is IERC721Receiver {
     During the auction there should be no way for NFT to leave the contract - it should be locked on contract. 
     One NFT can participate in only one auction.
     */
-    function listNFTOnAuction(uint256 _tokenId, uint256 _minBid, uint256 numberOfDays, address MyErc721) public {
+    function listNFTOnAuction(uint256 _tokenId, uint256 _minBid, uint256 numberOfDays, address MyErc721) checkBalance(_minBid) public {
         myERC721 = IMyErc721(MyErc721);
         address nftOwner = myERC721.ownerOf(_tokenId);
         require(nftOwner == msg.sender, "only owner");
+        // uint256 balance = myERC20.balanceOf(msg.sender);
+        // require(balance >= _minBid, 'not enotgh ERC20 funds');
         NFTs[_tokenId] = NFTAsset(_tokenId, _minBid, 0, address(0), block.timestamp, block.timestamp + (numberOfDays * 1 days), msg.sender);
-     
+        myERC20.transferFrom(msg.sender, address(this), _minBid);
         // _onERC721Received(nftOwner, _tokenId);
         myERC721.safeTransferFrom(nftOwner, address(this), _tokenId);
     }
@@ -91,10 +100,10 @@ contract NFTAuction is IERC721Receiver {
         //If there were previous bids
         if(NFTs[_tokenId].highestBidder != address(0)){
             //transfer money to the previous bidder
-            myERC20.transfer(NFTs[_tokenId].highestBidder, bid);
+            myERC20.transferFrom(msg.sender, NFTs[_tokenId].highestBidder, bid);
         } else {
              //transfer money to the NFT owner
-            myERC20.transfer(NFTs[_tokenId].owner, bid);
+            myERC20.transferFrom(msg.sender, NFTs[_tokenId].owner, bid);
         }
         NFTs[_tokenId].highestBidder = msg.sender;
         NFTs[_tokenId].highestBid = bid;

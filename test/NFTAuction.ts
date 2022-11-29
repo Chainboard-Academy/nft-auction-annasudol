@@ -11,11 +11,12 @@ describe("NFTAuction", function () {
     let auction: any;
     let acc0: SignerWithAddress;
     let acc1: SignerWithAddress;
+    let acc2: SignerWithAddress;
     const nftId_1 = 1;
     const nftId_3 = 3;
 
     before(async () => {
-        [acc0, acc1] = await ethers.getSigners();
+        [acc0, acc1, acc2] = await ethers.getSigners();
         const MyErc20 = await ethers.getContractFactory("MyErc20");
         erc20 = await MyErc20.deploy();
         const MyErc721 = await ethers.getContractFactory("MyErc721");
@@ -23,6 +24,7 @@ describe("NFTAuction", function () {
 
         const NFTAuction = await ethers.getContractFactory("NFTAuction");
         auction = await NFTAuction.deploy(erc20.address);
+        await erc20.mint(acc0.address, 100);
     })
 
     describe('listNFTOnAuction', () => {
@@ -35,15 +37,19 @@ describe("NFTAuction", function () {
             let nftOwner = await erc721.ownerOf(nftId_1);
             expect(nftOwner).to.equal(acc0.address)
             await erc721.approve(auction.address, nftId_1)
+            await erc20.increaseAllowance(auction.address, min_bid);
             const tx = await auction.listNFTOnAuction(nftId_1, min_bid, 1, erc721.address);
             await expect(tx).to.emit(auction, "ERC721Received").withArgs(auction.address, acc0.address, nftId_1, '0x');
             nftOwner = await erc721.ownerOf(nftId_1);
             expect(nftOwner).to.equal(auction.address)
         });
-        it('reverts transaction', async () => {
+        it('reverts transaction', (async () => {
+            await erc20.transfer(acc1.address, 1);
+            await erc20.connect(acc1).increaseAllowance(auction.address, min_bid);
             await erc721.connect(acc1).approve(auction.address, nftId_3)
-            await expect(auction.listNFTOnAuction(nftId_3, min_bid, 1, erc721.address)).to.be.rejectedWith("only owner")
-        })
+            await expect(auction.listNFTOnAuction(nftId_3, min_bid, 1, erc721.address)).to.be.rejectedWith("only owner");
+            await expect(auction.connect(acc1).listNFTOnAuction(nftId_3, min_bid, 1, erc721.address)).to.be.rejectedWith("not enough ERC20 funds");
+        }));
     });
 
     describe('place Bid', () => {
@@ -53,12 +59,12 @@ describe("NFTAuction", function () {
         before(async function () {
             await erc721.mintNFT(acc0.address, nftId_4);
             await erc721.approve(auction.address, nftId_4);
-            await auction.listNFTOnAuction(nftId_4, 1, 1, erc721.address);
-            await erc20.mint(auction.address, 12);
             await erc20.increaseAllowance(auction.address, 12);
+            await auction.listNFTOnAuction(nftId_4, 1, 1, erc721.address);
         });
         it('reverts transaction', async () => {
             await expect(auction.placeBid(nftId_1, 1)).to.be.rejectedWith("min bid is higher");
+            await expect(auction.connect(acc2).placeBid(nftId_1, 10)).to.be.rejected;
         });
         it('changes state after accepting transaction', async () => {
             let tx = await auction.placeBid(nftId_4, bid_1);
@@ -66,8 +72,11 @@ describe("NFTAuction", function () {
             const { highestBidder, highestBid } = await auction.NFTs(nftId_4);
             expect(highestBidder).to.equal(acc0.address);
             expect(highestBid).to.be.equal(bid_1);
+            await erc20.connect(acc1).increaseAllowance(auction.address, 10);
+            await erc721.connect(acc1).approve(auction.address, nftId_3)
+            await expect(auction.connect(acc1).placeBid(nftId_4, 10)).to.be.rejectedWith("ERC20: transfer amount exceeds balance");
             await expect(auction.connect(acc1).placeBid(nftId_4, 4)).to.be.rejectedWith("last bid is higher");
-
+            await erc20.increaseAllowance(auction.address, bid_2);
             tx = await auction.placeBid(nftId_4, bid_2);
             expect(tx).to.emit(auction, "Bid").withArgs(acc0.address, nftId_4, bid_2);
         })
@@ -79,10 +88,8 @@ describe("NFTAuction", function () {
         before(async function () {
             await erc721.mintNFT(acc0.address, nftId_5);
             await erc721.approve(auction.address, nftId_5);
+            await erc20.increaseAllowance(auction.address, 11);
             await auction.listNFTOnAuction(nftId_5, 1, 1, erc721.address);
-
-            await erc20.mint(auction.address, 12);
-            await erc20.increaseAllowance(auction.address, 12);
         });
 
         it('reverts transaction', async () => {
@@ -98,6 +105,8 @@ describe("NFTAuction", function () {
             await erc721.mintNFT(acc0.address, nftId_6);
             await erc721.approve(auction.address, nftId_6);
             await auction.listNFTOnAuction(nftId_6, 1, 1, erc721.address);
+            await erc20.transfer(acc1.address, 5);
+            await erc20.connect(acc1).increaseAllowance(auction.address, 5);
             await auction.connect(acc1).placeBid(nftId_6, 5);
             const endAt = (await time.latest()) + ONE_DAY_IN_SECS;
             await time.increaseTo(endAt);
