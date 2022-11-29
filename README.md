@@ -7,24 +7,21 @@ This project demonstrates a basic Hardhat use case. It comes with a sample contr
 
 [contract at goerli.etherscan.io] (https://goerli.etherscan.io/address/0xDC18BB3Ac97071e6A39f37AdbDca12B95788D25F#code)
 
-## erc721 contract goerli
-### 0xd8CE61BDf2c839c0Fd3fB839E334759cFF7F96f3
-[contract at goerli.etherscan.io] (https://goerli.etherscan.io/address/0xA0f938b0f34D102d87992B1EE7c24FAaF19B1dB1)
+
 
 ## erc721 contract goerli
 ### 0xdcad5e8DF4b5e32fC59ca4bEeb5E084e14eD5C18
 [contract at goerli.etherscan.io] (https://goerli.etherscan.io/address/0xdcad5e8DF4b5e32fC59ca4bEeb5E084e14eD5C18#code
 
 ## NFTAuction contract auction
-### 0x0128D7B4B00a04fB5EFc38051A9CA5a092cda1e6
-[contract at goerli.etherscan.io] (https://goerli.etherscan.io/address/0x0128D7B4B00a04fB5EFc38051A9CA5a092cda1e6#code)
+### 0x7C84b856eCFce8bb4D711B96feaA59b2E13A7257
+[contract at goerli.etherscan.io] (https://goerli.etherscan.io/address/0x7C84b856eCFce8bb4D711B96feaA59b2E13A7257#code)
 
 
 ```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
+##tasks
+npx hardhat mintNFT --to [value] --tokenId [value]--network goerli
+npx hardhat mint --to 0x80dD5aD6B8775c4E31C999cA278Ef4D035717872 --id 1--network goerli
+npx hardhat listNFTOnAuction --minPrice [value] --tokenId [value] --numberOfDays [value] --MyErc721 [value] --network goerli
 
 ```
-

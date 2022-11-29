@@ -78,8 +78,7 @@ contract NFTAuction is IERC721Receiver {
         myERC721 = IMyErc721(MyErc721);
         address nftOwner = myERC721.ownerOf(_tokenId);
         require(nftOwner == msg.sender, "only owner");
-        // uint256 balance = myERC20.balanceOf(msg.sender);
-        // require(balance >= _minBid, 'not enotgh ERC20 funds');
+
         NFTs[_tokenId] = NFTAsset(_tokenId, _minBid, 0, address(0), block.timestamp, block.timestamp + (numberOfDays * 1 days), msg.sender);
         myERC20.transferFrom(msg.sender, address(this), _minBid);
         // _onERC721Received(nftOwner, _tokenId);
@@ -102,7 +101,7 @@ contract NFTAuction is IERC721Receiver {
             //transfer money to the previous bidder
             myERC20.transferFrom(msg.sender, NFTs[_tokenId].highestBidder, bid);
         } else {
-             //transfer money to the NFT owner
+        //no b bids, transfer money to the NFT owner
             myERC20.transferFrom(msg.sender, NFTs[_tokenId].owner, bid);
         }
         NFTs[_tokenId].highestBidder = msg.sender;
@@ -132,6 +131,8 @@ contract NFTAuction is IERC721Receiver {
 
 
     function _withdrawNft(uint256 _tokenId) internal {
+        //money and NFT is going back to the NFT creator
+        myERC20.transfer(NFTs[_tokenId].owner, NFTs[_tokenId].minBid);
         myERC721.safeTransferFrom(address(this), NFTs[_tokenId].owner, _tokenId);
         delete NFTs[_tokenId];
     }
