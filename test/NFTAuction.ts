@@ -19,8 +19,8 @@ describe("NFTAuction", function () {
         [acc0, acc1, acc2] = await ethers.getSigners();
         const MyErc20 = await ethers.getContractFactory("MyErc20");
         erc20 = await MyErc20.deploy();
-        const MyErc721 = await ethers.getContractFactory("MyErc721");
-        erc721 = await MyErc721.deploy();
+        const MyNFT = await ethers.getContractFactory("MyNFT");
+        erc721 = await MyNFT.deploy();
 
         const NFTAuction = await ethers.getContractFactory("NFTAuction");
         auction = await NFTAuction.deploy(erc20.address);

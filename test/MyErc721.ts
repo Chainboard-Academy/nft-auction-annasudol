@@ -2,16 +2,16 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-describe('MyErc721', function () {
+describe('MyNFT', function () {
     const zero_address = ethers.constants.AddressZero;
     let acc0: SignerWithAddress;
     let acc1: SignerWithAddress;
     let token: any;
 
     before(async function () {
-        const myERC721 = await ethers.getContractFactory("MyErc721");
+        const MyNFT = await ethers.getContractFactory("MyNFT");
         [acc0, acc1] = await ethers.getSigners();
-        token = await myERC721.deploy();
+        token = await MyNFT.deploy();
     });
     describe('safeMint', () => {
         const tokenId = 1;

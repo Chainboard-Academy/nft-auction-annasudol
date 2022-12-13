@@ -1,10 +1,11 @@
 import { ethers } from "hardhat";
 
+
 async function main() {
-    const CONTRACT = await ethers.getContractFactory("MyNFT");
+    const CONTRACT = await ethers.getContractFactory("NftMarket");
     const contract = await CONTRACT.deploy();
     await contract.deployed();
-    console.log("Erc721 deployed to:", contract.address);
+    console.log("Migrations deployed to:", contract.address);
 }
 
 main().catch((error) => {

@@ -1,6 +1,6 @@
 # NFT auction
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+The Project allows trading NFTs in English auctions. To call function `placeBid` user need to buy ERC20 `0xDC18BB3Ac97071e6A39f37AdbDca12B95788D25F` first.
 
 ## erc20 contract goerli
 ### 0xDC18BB3Ac97071e6A39f37AdbDca12B95788D25F
@@ -22,6 +22,6 @@ This project demonstrates a basic Hardhat use case. It comes with a sample contr
 ##tasks
 npx hardhat mintNFT --to [value] --tokenId [value]--network goerli
 npx hardhat mint --to 0x80dD5aD6B8775c4E31C999cA278Ef4D035717872 --id 1--network goerli
-npx hardhat listNFTOnAuction --minPrice [value] --tokenId [value] --numberOfDays [value] --MyErc721 [value] --network goerli
+npx hardhat listNFTOnAuction --minPrice [value] --tokenId [value] --numberOfDays [value] --MyNFT [value] --network goerli
 
 ```

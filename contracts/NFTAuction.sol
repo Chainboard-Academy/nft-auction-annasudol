@@ -12,13 +12,13 @@ interface IMyErc20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
 
 }
-interface IMyErc721 {
+interface IMyNFT {
     function safeTransferFrom(address from, address to, uint256 tokenId) external;
     function ownerOf(uint256 tokenId) external returns (address);
 }
 
 contract NFTAuction is IERC721Receiver {
-    IMyErc721 public myERC721;
+    IMyNFT public MyNFT;
     IMyErc20 public myERC20;
     address public contractOwner;
 
@@ -37,7 +37,7 @@ contract NFTAuction is IERC721Receiver {
         contractOwner = msg.sender;
         myERC20 = IMyErc20(_MyErc20);
     }
-    // event MintNFT(address to, uint256 tokenId);
+
     event ERC721Received(address operator, address from, uint tokenId, bytes data);
     event Bid(address bidder, uint256 tokenId, uint256 bid);
     event FinishAuction(address winner, uint256 tokenId, uint256 bid);
@@ -74,23 +74,19 @@ contract NFTAuction is IERC721Receiver {
     During the auction there should be no way for NFT to leave the contract - it should be locked on contract. 
     One NFT can participate in only one auction.
     */
-    function listNFTOnAuction(uint256 _tokenId, uint256 _minBid, uint256 numberOfDays, address MyErc721) checkBalance(_minBid) public {
-        myERC721 = IMyErc721(MyErc721);
-        address nftOwner = myERC721.ownerOf(_tokenId);
+    function listNFTOnAuction(uint256 _tokenId, uint256 _minBid, uint256 numberOfDays, address MyNFT) checkBalance(_minBid) public {
+        MyNFT = IMyNFT(MyNFT);
+        address nftOwner = MyNFT.ownerOf(_tokenId);
         require(nftOwner == msg.sender, "only owner");
 
         NFTs[_tokenId] = NFTAsset(_tokenId, _minBid, 0, address(0), block.timestamp, block.timestamp + (numberOfDays * 1 days), msg.sender);
         myERC20.transferFrom(msg.sender, address(this), _minBid);
         // _onERC721Received(nftOwner, _tokenId);
-        myERC721.safeTransferFrom(nftOwner, address(this), _tokenId);
+        MyNFT.safeTransferFrom(nftOwner, address(this), _tokenId);
     }
 
 
-    /*
-    placeBid - should take from user ERC20 tokens specified in listOnAuction function for specific NFT (address+tokenId). 
-    Function should revert if bid is placed out of auction effective time range specified in listNFTOnAuction. 
-    Bid cannot be reverted, once tokens are deposited, they can be only returned when bidder loses.
-    */
+
     function placeBid(uint256 _tokenId, uint256 bid) public {
         require(NFTs[_tokenId].endAt > block.timestamp, "auction ended");
         require(NFTs[_tokenId].minBid < bid, "min bid is higher");
@@ -120,7 +116,7 @@ contract NFTAuction is IERC721Receiver {
          require(NFTs[_tokenId].endAt < block.timestamp, "auction not ended");
          if(NFTs[_tokenId].highestBid > 0) {
             emit FinishAuction(NFTs[_tokenId].highestBidder, _tokenId, NFTs[_tokenId].highestBid);
-            myERC721.safeTransferFrom(address(this), NFTs[_tokenId].highestBidder, _tokenId);
+            MyNFT.safeTransferFrom(address(this), NFTs[_tokenId].highestBidder, _tokenId);
             delete NFTs[_tokenId];
          } else {
             //no bids, nft back to the owner
@@ -133,7 +129,7 @@ contract NFTAuction is IERC721Receiver {
     function _withdrawNft(uint256 _tokenId) internal {
         //money and NFT is going back to the NFT creator
         myERC20.transfer(NFTs[_tokenId].owner, NFTs[_tokenId].minBid);
-        myERC721.safeTransferFrom(address(this), NFTs[_tokenId].owner, _tokenId);
+        MyNFT.safeTransferFrom(address(this), NFTs[_tokenId].owner, _tokenId);
         delete NFTs[_tokenId];
     }
 }
